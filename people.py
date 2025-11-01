@@ -1,4 +1,6 @@
 from datetime import datetime
+from flask import abort
+from http import HTTPStatus
 
 
 def get_timestamp() -> str:
@@ -26,3 +28,18 @@ MOCKED_PEOPLE_DATA = {
 
 def read_all() -> list[dict[str, str]]:
     return [*MOCKED_PEOPLE_DATA.values()]
+
+
+def create(person: dict[str, str]) -> tuple[dict[str, str], int]:
+    lname = person['lname']  # Required field
+    fname = person.get("fname", "")
+
+    if lname and lname not in MOCKED_PEOPLE_DATA:
+        MOCKED_PEOPLE_DATA[lname] = {
+            "lname": lname,
+            "fname": fname,
+            "timestamp": get_timestamp(),
+        }
+        return MOCKED_PEOPLE_DATA[lname], HTTPStatus.CREATED
+    else:
+        abort(HTTPStatus.NOT_ACCEPTABLE, f'Person with last name {lname} already exists')

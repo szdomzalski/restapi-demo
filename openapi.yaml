@@ -9,8 +9,23 @@ info:
 servers:
   - url: "/api"  # Base path for the API, all endpoints will be prefixed with /api, e.g. https://example.com/api/people
 
+# Components are reusable parts of the API specification
+components:
+  schemas:
+    # Definition of the Person object schema (data model)
+    Person:
+      type: "object"
+      required:  # List of required properties for the Person object; must exist in "properties"
+        - lname
+      properties:  # Properties of the Person object
+        fname:  # "First Name" property of Person
+          type: "string"
+        lname:  # "Last Name" property of Person
+          type: "string"
+
 paths:
   /people:
+    # Get to list all people
     get:
       operationId: "people.read_all"  # Python function to handle this endpoint
       tags:  # Categorization tag for the endpoint; allows grouping in documentation
@@ -19,3 +34,20 @@ paths:
       responses:  # Status codes and their descriptions for the endpoint
         "200":
           description: "Successfully read people list"
+    # Post to create a new person
+    post:
+      operationId: "people.create"
+      tags:
+        - People
+      summary: "Create a person"
+      requestBody:  # Block requestBody defines the body of the request for POST/PUT endpoints
+          description: "Person to create"
+          required: True
+          x-body-name: "person"  # Name of the body parameter changed from "body" to "person"
+          content:
+            application/json:  # Content type of the request body; data exchange format
+              schema:  # Schema of the request body
+                $ref: "#/components/schemas/Person"  # Reference to the Person schema defined in components
+      responses:
+        "201":
+          description: "Successfully created person"

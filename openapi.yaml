@@ -11,6 +11,7 @@ servers:
 
 # Components are reusable parts of the API specification
 components:
+  # Definition of reusable schemas (data models)
   schemas:
     # Definition of the Person object schema (data model)
     Person:
@@ -22,6 +23,15 @@ components:
           type: "string"
         lname:  # "Last Name" property of Person
           type: "string"
+  # Definition of reusable parameters for endpoints
+  parameters:
+    lname:
+      name: "lname"
+      description: "Last name of the person to get"
+      in: path
+      required: True
+      schema:
+        type: "string"
 
 paths:
   /people:
@@ -51,3 +61,46 @@ paths:
       responses:
         "201":
           description: "Successfully created person"
+  /people/{lname}:
+    get:
+      operationId: "people.read_one"
+      tags:
+        - People
+      summary: "Read one person"
+      parameters:
+        - $ref: "#/components/parameters/lname"
+      responses:
+        "200":
+          description: "Successfully read person"
+        "404":
+          description: "Person not found"
+    put:
+      tags:
+        - People
+      operationId: "people.update"
+      summary: "Update a person"
+      parameters:
+        - $ref: "#/components/parameters/lname"
+      responses:
+        "200":
+          description: "Successfully updated person"
+        "404":
+          description: "Person not found"
+      requestBody:
+        x-body-name: "person"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Person"
+    delete:
+      tags:
+        - People
+      operationId: "people.delete"
+      summary: "Delete a person"
+      parameters:
+        - $ref: "#/components/parameters/lname"
+      responses:
+        "204":
+          description: "Successfully deleted person"
+        "404":
+          description: "Person not found"

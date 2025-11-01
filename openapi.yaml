@@ -1,0 +1,21 @@
+openapi: 3.0.0
+
+# Metadata about the API
+info:
+  title: "RP Flask REST API"
+  description: "An API about people and notes"
+  version: "1.0.0"
+
+servers:
+  - url: "/api"  # Base path for the API, all endpoints will be prefixed with /api, e.g. https://example.com/api/people
+
+paths:
+  /people:
+    get:
+      operationId: "people.read_all"  # Python function to handle this endpoint
+      tags:  # Categorization tag for the endpoint; allows grouping in documentation
+        - "People"
+      summary: "Read the list of people"  # UI summary for the endpoint
+      responses:  # Status codes and their descriptions for the endpoint
+        "200":
+          description: "Successfully read people list"

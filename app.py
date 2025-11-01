@@ -1,8 +1,10 @@
-from flask import Flask, render_template
+from flask import render_template
+import connexion
 
 
-app = Flask(__name__)
-
+# app = Flask(__name__)
+app = connexion.FlaskApp(__name__, specification_dir='./')
+app.add_api('openapi.yaml')
 
 @app.route('/')
 def home() -> str:
@@ -10,4 +12,5 @@ def home() -> str:
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.app.debug = True  # Set debug mode on the underlying Flask app
+    app.run()

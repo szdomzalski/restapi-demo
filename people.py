@@ -1,77 +1,56 @@
-from datetime import datetime
+from math import e
 from flask import abort
 from http import HTTPStatus
 
-
-def get_timestamp() -> str:
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
-MOCK_PEOPLE = {
-    "fairy": {
-        "fname": "Tooth",
-        "lname": "Fairy",
-        "timestamp": get_timestamp(),
-    },
-    "ruprecht": {
-        "fname": "Knecht",
-        "lname": "Ruprecht",
-        "timestamp": get_timestamp(),
-    },
-    "bunny": {
-        "fname": "Easter",
-        "lname": "Bunny",
-        "timestamp": get_timestamp(),
-    }
-}
+from config import db
+from models import Person, person_schema, people_schema
 
 
 def read_all() -> list[dict[str, str]]:
-    return [*MOCK_PEOPLE.values()]
+    people = Person.query.all()
+    dumpy = people_schema.dump(people)
+    print(type(dumpy))
+    return people_schema.dump(people)
 
 
 def create(person: dict[str, str]) -> tuple[dict[str, str], int]:
     lname = person['lname']  # Required field
-    fname = person.get("fname", "")
 
     if not lname:
         abort(HTTPStatus.BAD_REQUEST, "Last name is required")
 
-    last_name_insensitive = lname.casefold()
-
-    if last_name_insensitive in MOCK_PEOPLE:
+    if Person.query.filter_by(lname=lname).one_or_none() is not None:
         abort(HTTPStatus.CONFLICT, f"Person with last name '{lname}' already exists")
 
-    MOCK_PEOPLE[last_name_insensitive] = {
-        "lname": lname,
-        "fname": fname,
-        "timestamp": get_timestamp(),
-    }
-    return MOCK_PEOPLE[last_name_insensitive], HTTPStatus.CREATED
+    new_person = person_schema.load(person, session=db.session)  # We can directly load payload into Person model
+    db.session.add(new_person)
+    db.session.commit()
+    return person_schema.dump(new_person), HTTPStatus.CREATED
 
 
 def read_one(lname: str) -> dict[str, str]:
-    lname_insensitive = lname.casefold()
-    try:
-        return MOCK_PEOPLE[lname_insensitive]
-    except KeyError:
+    person = Person.query.filter_by(lname=lname).one_or_none()
+    if person is not None:
+        return person_schema.dump(person)
+    else:
         abort(HTTPStatus.NOT_FOUND, f'Person with last name {lname} not found')
 
 
 def update(lname: str, person: dict[str, str]) -> dict[str, str]:
-    lname_insensitive = lname.casefold()
-    try:
-        MOCK_PEOPLE[lname_insensitive]['fname'] = person.get('fname', MOCK_PEOPLE[lname_insensitive]['fname'])
-        MOCK_PEOPLE[lname]["timestamp"] = get_timestamp()
-        return MOCK_PEOPLE[lname_insensitive]
-    except KeyError:
+    existing_person = Person.query.filter_by(lname=lname).one_or_none()
+    if existing_person is None:
         abort(HTTPStatus.NOT_FOUND, f'Person with last name {lname} not found')
+
+    updated_person = person_schema.load(person, session=db.session)
+    existing_person.fname = updated_person.fname
+    db.session.commit()
+    return person_schema.dump(existing_person), HTTPStatus.OK
 
 
 def delete(lname: str) -> tuple[str, int]:
-    lname_insensitive = lname.casefold()
-    try:
-        del MOCK_PEOPLE[lname_insensitive]
-        return None, HTTPStatus.NO_CONTENT
-    except KeyError:
+    existing_person = Person.query.filter_by(lname=lname).one_or_none()
+    if existing_person is None:
         abort(HTTPStatus.NOT_FOUND, f'Person with last name {lname} not found')
+
+    db.session.delete(existing_person)
+    db.session.commit()

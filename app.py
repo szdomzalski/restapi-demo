@@ -1,14 +1,17 @@
 from flask import render_template
-import connexion
+
+import config
+from models import Person
 
 
 # app = Flask(__name__)
-app = connexion.FlaskApp(__name__, specification_dir='./')
-app.add_api('openapi.yaml')
+app = config.connexion_app
+app.add_api(config.basedir / 'openapi.yaml')
 
 @app.route('/')
 def home() -> str:
-    return render_template('index.html')
+    people = Person.query.all()
+    return render_template('index.html', people=people)
 
 
 if __name__ == '__main__':

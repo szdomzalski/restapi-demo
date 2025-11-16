@@ -1,4 +1,3 @@
-from math import e
 from flask import abort
 from http import HTTPStatus
 
@@ -8,8 +7,6 @@ from models import Person, person_schema, people_schema
 
 def read_all() -> list[dict[str, str]]:
     people = Person.query.all()
-    dumpy = people_schema.dump(people)
-    print(type(dumpy))
     return people_schema.dump(people)
 
 
